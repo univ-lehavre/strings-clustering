@@ -1,4 +1,4 @@
-import { levenshtein, ngrams, normalizeString } from '../src/index';
+import { levenshtein, ngrams, normalizeString } from '../src';
 
 // Petit demo montrant trois utilitaires : normalizeString, ngrams, levenshtein
 

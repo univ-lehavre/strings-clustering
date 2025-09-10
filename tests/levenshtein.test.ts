@@ -1,4 +1,4 @@
-import { levenshtein } from '../src/index';
+import { levenshtein } from '../src/utils';
 
 describe('levenshtein', () => {
   it('renvoie 0 pour deux chaînes identiques', () => {

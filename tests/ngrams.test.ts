@@ -1,4 +1,4 @@
-import { ngrams } from '../src/index';
+import { ngrams } from '../src/utils';
 
 describe('ngrams', () => {
   it('génère des n-grams simples', () => {

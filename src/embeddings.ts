@@ -1,4 +1,4 @@
-import { ngrams } from '.';
+import { ngrams } from './utils';
 import { EmbeddingOptions, NgramOptions } from './types';
 
 /**

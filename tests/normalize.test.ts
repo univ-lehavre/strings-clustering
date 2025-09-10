@@ -1,4 +1,4 @@
-import { normalizeString } from '../src/index';
+import { normalizeString } from '../src/utils';
 
 describe('normalizeString', () => {
   it('supprime les diacritiques et met en minuscules', () => {

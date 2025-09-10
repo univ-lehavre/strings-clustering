@@ -1,10 +1,4 @@
-import {
-  fitNgramVocabulary,
-  textToTfVector,
-  embedText,
-  embedCorpus,
-  cosine,
-} from '../src/embeddings.ts';
+import { fitNgramVocabulary, textToTfVector, embedText, embedCorpus, cosine } from '../src';
 
 // Demo pas à pas pour les fonctions de src/embeddings.ts
 // 1) fitNgramVocabulary
