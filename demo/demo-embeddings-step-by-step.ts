@@ -87,45 +87,4 @@ console.log(
     .join('\n'),
 );
 
-// --- Comparaison TF vs TF-IDF ---
-console.log("\n--- Comparaison: weighting='tf' vs weighting='tfidf' ---");
-const embsTf = embedCorpus(corpus, vocab, { n: 3, weighting: 'tf' });
-const embsTfidf = embedCorpus(corpus, vocab, { n: 3, weighting: 'tfidf' });
-
-// Similarités entre la query et corpus pour TF
-const qEmbTf = embedText(query, vocab, { n: 3 }); // embedText uses TF by construction
-const scoresTf = embsTf.map((e, i) => ({ i, score: cosine(qEmbTf, e) }));
-scoresTf.sort((a, b) => b.score - a.score);
-
-// Similarités entre la query et corpus pour TF-IDF
-const qEmbTfidf = embedText(query, vocab, { n: 3 }); // same query embedding for compar.
-const scoresTfidf = embsTfidf.map((e, i) => ({ i, score: cosine(qEmbTfidf, e) }));
-scoresTfidf.sort((a, b) => b.score - a.score);
-
-console.log('\nTop 3 (TF):');
-console.log(
-  scoresTf
-    .slice(0, 3)
-    .map(s => `${s.i}:${corpus[s.i]} (${s.score.toFixed(3)})`)
-    .join('\n'),
-);
-console.log('\nTop 3 (TF-IDF):');
-console.log(
-  scoresTfidf
-    .slice(0, 3)
-    .map(s => `${s.i}:${corpus[s.i]} (${s.score.toFixed(3)})`)
-    .join('\n'),
-);
-
-// Afficher un extrait des vecteurs pour comparaison
-console.log('\nExtrait vecteurs (TF vs TF-IDF) pour le document 0:');
-console.log(
-  'TF:',
-  embsTf[0].slice(0, 10).map(v => v.toFixed(3)),
-);
-console.log(
-  'TF-IDF:',
-  embsTfidf[0].slice(0, 10).map(v => v.toFixed(3)),
-);
-
 console.log('\n=== Fin DEMO embeddings ===');
