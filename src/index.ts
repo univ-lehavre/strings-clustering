@@ -1,5 +1,5 @@
-import type { NgramOptions, NormalizeOptions } from './types';
-export type { EmbeddingOptions, NgramOptions, NormalizeOptions } from './types';
+import type { NgramOptions, NormalizeOptions, EmbeddingOptions } from './types';
+export type { EmbeddingOptions, NgramOptions, NormalizeOptions };
 export { fitNgramVocabulary, textToTfVector, embedText, cosine } from './embeddings';
 
 /**

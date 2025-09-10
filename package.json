@@ -14,7 +14,8 @@
     "format": "prettier --write \"src/**/*.{ts,js,tsx,jsx,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,tsx,jsx,json,md}\"",
     "changeset": "npx @changesets/cli",
-    "bump": "npx @changesets/cli version"
+    "bump": "npx @changesets/cli version",
+    "demo": "pnpm -s tsx demo/index.ts"
   },
   "author": "Pierre-Olivier Chasset",
   "license": "UNLICENSED",
@@ -37,9 +38,8 @@
     "prettier": "3.6.2",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
+    "tsx": "^3.14.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0"
-  },
-  "dependencies": {
   }
 }

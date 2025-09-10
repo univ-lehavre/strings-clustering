@@ -27,7 +27,8 @@ export interface NormalizeOptions {
 
   /**
    * Réduit les séquences d'espaces (tabs, retours ligne...) en un seul espace,
-   * puis tronque les espaces en début/fin. Par défaut : true.
+   * puis tronque les espaces en début/fin.
+   * Par défaut : true.
    */
   collapseWhitespace?: boolean;
 }
