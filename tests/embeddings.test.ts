@@ -1,4 +1,4 @@
-import { fitNgramVocabulary, textToTfVector, embedText } from '../src/embeddings';
+import { fitNgramVocabulary, textToTfVector, embedText, embedCorpus } from '../src/embeddings';
 
 describe('fitNgramVocabulary', () => {
   it('construit un vocabulaire basique pour n=3', () => {
@@ -37,6 +37,38 @@ describe('fitNgramVocabulary', () => {
     });
     // avec preserveWhitespace les tokens contenant un espace doivent exister
     expect(vocab.some(t => t.includes(' '))).toBeTruthy();
+  });
+});
+
+describe('embedCorpus', () => {
+  it("retourne autant de vecteurs que de documents et préserve l'ordre", () => {
+    const vocab = ['abc', 'bcd', 'cde'];
+    const texts = ['abcde', 'xabcx', ''];
+    const embs = embedCorpus(texts, vocab, { n: 3 });
+    expect(embs.length).toBe(texts.length);
+    // chaque embedding doit correspondre à embedText pour le même texte
+    for (let i = 0; i < texts.length; i++) {
+      expect(embs[i]).toEqual(
+        embedText(texts[i], vocab, { n: 3 } as unknown as Parameters<typeof embedText>[2]),
+      );
+    }
+  });
+
+  it('gère un corpus vide (retourne un tableau vide)', () => {
+    const vocab: string[] = ['a', 'b'];
+    const embs = embedCorpus([], vocab, { n: 1 });
+    expect(Array.isArray(embs)).toBeTruthy();
+    expect(embs.length).toBe(0);
+  });
+
+  it('normalise chaque vecteur en L2', () => {
+    const vocab = ['ab', 'bc', 'cd'];
+    const texts = ['abcd', 'bcda'];
+    const embs = embedCorpus(texts, vocab, { n: 2 });
+    for (const v of embs) {
+      const sumsq = v.reduce((s, x) => s + x * x, 0);
+      if (sumsq !== 0) expect(Math.abs(sumsq - 1)).toBeLessThan(1e-6);
+    }
   });
 });
 
