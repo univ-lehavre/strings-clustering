@@ -57,10 +57,30 @@ export type NgramOptions = {
 };
 
 /**
- * Options pour les embeddings simples basés sur n-grams et TF.
+ * Options pour les embeddings simples basés sur des n-grams et TF (term-frequency).
+ *
+ * Ces options contrôlent la taille des n-grams utilisés pour la tokenisation,
+ * le filtrage des tokens peu fréquents lors de la construction du vocabulaire,
+ * et les options transmises à la fonction de génération de n-grams.
+ *
+ * @property {number} [n] - Taille des n-grams (par défaut : 3).
+ * @property {number} [minCount] - Fréquence minimale requise pour qu'un token
+ *   soit inclus dans le vocabulaire (par défaut : 1). Utiliser une valeur
+ *   supérieure aide à supprimer le bruit (tokens rares).
+ * @property {NgramOptions} [ngramOpts] - Options passées à la fonction `ngrams`
+ *   lors de la tokenisation (ex. padding, normalisation, préservation des espaces).
  */
 export type EmbeddingOptions = {
-  n?: number; // taille des n-grams (défaut : 3)
-  minCount?: number; // fréquence minimale d'un token pour être dans le vocabulaire (défaut : 1)
-  ngramOpts?: NgramOptions; // options passées à ngrams
+  /**
+   * Taille des n-grams (par défaut : 3).
+   */
+  n?: number;
+  /**
+   * Fréquence minimale d'un token pour être dans le vocabulaire (défaut : 1).
+   */
+  minCount?: number;
+  /**
+   * Options passées à ngrams.
+   */
+  ngramOpts?: NgramOptions;
 };

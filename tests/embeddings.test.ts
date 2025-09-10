@@ -1,4 +1,4 @@
-import { fitNgramVocabulary, textToTfVector } from '../src/embeddings';
+import { fitNgramVocabulary, textToTfVector, embedText } from '../src/embeddings';
 
 describe('fitNgramVocabulary', () => {
   it('construit un vocabulaire basique pour n=3', () => {
@@ -42,10 +42,11 @@ describe('fitNgramVocabulary', () => {
 
 describe('textToTfVector', () => {
   it('produit un vecteur de la taille du vocabulaire', () => {
-    const docs = ['abcdef'];
-    const vocab = fitNgramVocabulary(docs, { n: 3, minCount: 1 });
+    const vocab = ['abc', 'bcd', 'cde', 'def'];
     const vec = textToTfVector('abcdef', vocab, 3);
     expect(vec.length).toBe(vocab.length);
+    // au moins un token devrait être présent dans le texte
+    expect(vec.some(v => v > 0)).toBeTruthy();
   });
 
   it('normalise en L2 (norme 1) sauf vecteur nul', () => {
@@ -59,12 +60,10 @@ describe('textToTfVector', () => {
   });
 
   it('les indices correspondent aux tokens du vocabulaire', () => {
-    const docs = ['abcde'];
-    const vocab = fitNgramVocabulary(docs, { n: 3, minCount: 1 });
+    // Vocabulaire explicite pour vérifier les indices de façon claire
+    const vocab = ['abc', 'bcd', 'cde'];
     const vec = textToTfVector('abcde', vocab, 3);
-    // token 'abc' devrait exister et avoir un poids > 0
-    const i = vocab.indexOf('abc');
-    expect(i).toBeGreaterThanOrEqual(0);
-    expect(vec[i]).toBeGreaterThan(0);
+    // 'abc' est à l'index 0
+    expect(vec[0]).toBeGreaterThan(0);
   });
 });
