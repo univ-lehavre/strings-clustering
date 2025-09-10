@@ -115,7 +115,64 @@ export const embedCorpus = (
   vocab: string[],
   opts: EmbeddingOptions = { n: 3 },
 ): number[][] => {
-  return texts.map(t => embedText(t, vocab, opts));
+  const n = opts.n ?? 3;
+  const ngramOpts: NgramOptions = opts.ngramOpts ?? {
+    normalize: true,
+    pad: false,
+    padChar: '_',
+    preserveWhitespace: false,
+  };
+
+  const out: number[][] = [];
+  if (vocab.length === 0) return texts.map(() => []);
+
+  // build index once
+  const index = new Map<string, number>();
+  vocab.forEach((t, i) => index.set(t, i));
+
+  // If TF-IDF weighting requested, compute document frequencies and idf
+  let idf: number[] | undefined;
+  if (opts.weighting === 'tfidf') {
+    const N = texts.length;
+    const df = new Array<number>(vocab.length).fill(0);
+    for (const doc of texts) {
+      const toks = ngrams(doc, n, ngramOpts);
+      const seen = new Set<string>();
+      for (const t of toks) seen.add(t);
+      for (const t of seen) {
+        const i = index.get(t);
+        if (i !== undefined) df[i]++;
+      }
+    }
+    idf = df.map(d => Math.log(1 + N / (1 + d))); // smoothed idf
+  }
+
+  for (const doc of texts) {
+    const vec = new Array<number>(vocab.length).fill(0);
+    const toks = ngrams(doc, n, ngramOpts);
+    for (const t of toks) {
+      const i = index.get(t);
+      if (i !== undefined) vec[i]++;
+    }
+
+    if (opts.weighting === 'tfidf' && idf) {
+      for (let i = 0; i < vec.length; i++) {
+        if (vec[i] !== 0) vec[i] = vec[i] * idf[i];
+      }
+    }
+
+    // L2 normalization
+    let norm = 0;
+    for (const v of vec) norm += v * v;
+    norm = Math.sqrt(norm);
+    if (norm === 0) {
+      out.push(vec);
+      continue;
+    }
+    for (let i = 0; i < vec.length; i++) vec[i] = vec[i] / norm;
+    out.push(vec);
+  }
+  return out;
 };
 
 /**

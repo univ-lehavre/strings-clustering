@@ -84,4 +84,10 @@ export type EmbeddingOptions = {
    * Options passées à ngrams.
    */
   ngramOpts?: NgramOptions;
+  /**
+   * Méthode de pondération à utiliser pour les embeddings :
+   * - 'tf' (par défaut) : pondération par fréquence brute (term-frequency)
+   * - 'tfidf' : pondération TF * IDF (IDF calculé sur le corpus fourni à `embedCorpus`)
+   */
+  weighting?: 'tf' | 'tfidf';
 };
