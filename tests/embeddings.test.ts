@@ -39,3 +39,32 @@ describe('fitNgramVocabulary', () => {
     expect(vocab.some(t => t.includes(' '))).toBeTruthy();
   });
 });
+
+describe('textToTfVector', () => {
+  it('produit un vecteur de la taille du vocabulaire', () => {
+    const docs = ['abcdef'];
+    const vocab = fitNgramVocabulary(docs, { n: 3, minCount: 1 });
+    const vec = textToTfVector('abcdef', vocab, 3);
+    expect(vec.length).toBe(vocab.length);
+  });
+
+  it('normalise en L2 (norme 1) sauf vecteur nul', () => {
+    const vocab = ['abc', 'bcd', 'cde'];
+    const vec = textToTfVector('abcde', vocab, 3);
+    const sumsq = vec.reduce((s, v) => s + v * v, 0);
+    expect(Math.abs(sumsq - 1)).toBeLessThan(1e-6);
+
+    const empty = textToTfVector('', vocab, 3);
+    expect(empty.every(x => x === 0)).toBeTruthy();
+  });
+
+  it('les indices correspondent aux tokens du vocabulaire', () => {
+    const docs = ['abcde'];
+    const vocab = fitNgramVocabulary(docs, { n: 3, minCount: 1 });
+    const vec = textToTfVector('abcde', vocab, 3);
+    // token 'abc' devrait exister et avoir un poids > 0
+    const i = vocab.indexOf('abc');
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(vec[i]).toBeGreaterThan(0);
+  });
+});
