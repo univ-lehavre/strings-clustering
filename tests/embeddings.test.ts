@@ -1,4 +1,10 @@
-import { fitNgramVocabulary, textToTfVector, embedText, embedCorpus } from '../src/embeddings';
+import {
+  fitNgramVocabulary,
+  textToTfVector,
+  embedText,
+  embedCorpus,
+  cosine,
+} from '../src/embeddings';
 
 describe('fitNgramVocabulary', () => {
   it('construit un vocabulaire basique pour n=3', () => {
@@ -130,5 +136,52 @@ describe('embedText', () => {
     const v1 = embedText('abcdef', vocab, {} as unknown as Parameters<typeof embedText>[2]);
     const v2 = textToTfVector('abcdef', vocab, 3);
     expect(v1).toEqual(v2);
+  });
+});
+
+describe('cosine - cas unitaires complets', () => {
+  it('1 pour deux vecteurs identiques (petit)', () => {
+    const a = [1, 2, 3];
+    expect(cosine(a, a)).toBeCloseTo(1);
+  });
+
+  it('-1 impossible avec vecteurs non centrés (mais teste la gestion des signes)', () => {
+    const a = [1, 0];
+    const b = [-1, 0];
+    // produit négatif complet => -1 attendu
+    expect(cosine(a, b)).toBeCloseTo(-1);
+  });
+
+  it('0 pour vecteurs orthogonaux', () => {
+    const a = [1, 0, 0];
+    const b = [0, 1, 0];
+    expect(cosine(a, b)).toBeCloseTo(0);
+  });
+
+  it('prise en charge de vecteurs de longueurs différentes (utilise la longueur min)', () => {
+    const a = [1, 2, 0];
+    const b = [1, 2];
+    // équivalent de cos(a.slice(0,2), b)
+    const expected = (1 * 1 + 2 * 2) / (Math.sqrt(1 * 1 + 2 * 2) * Math.sqrt(1 * 1 + 2 * 2));
+    expect(cosine(a, b)).toBeCloseTo(expected);
+  });
+
+  it('renvoie 0 si l un des vecteurs est nul', () => {
+    const a = [0, 0, 0];
+    const b = [1, 2, 3];
+    expect(cosine(a, b)).toBe(0);
+    expect(cosine(b, a)).toBe(0);
+  });
+
+  it('gère valeurs flottantes et tolérance', () => {
+    const a = [0.1, 0.2, 0.3];
+    const b = [0.1, 0.2, 0.3];
+    expect(cosine(a, b)).toBeCloseTo(1, 6);
+  });
+
+  it('cas extrêmes: vecteurs grands et petits', () => {
+    const a = Array.from({ length: 100 }, (_, i) => i + 1);
+    const b = [...a];
+    expect(cosine(a, b)).toBeCloseTo(1);
   });
 });
