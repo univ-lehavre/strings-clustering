@@ -1,4 +1,6 @@
-import type { NormalizeOptions } from './types';
+import type { NgramOptions, NormalizeOptions } from './types';
+export type { EmbeddingOptions, NgramOptions, NormalizeOptions } from './types';
+export { fitNgramVocabulary, textToTfVector, embedText, cosine } from './embeddings';
 
 /**
  * Calcule la distance de Levenshtein entre deux chaînes de caractères.
@@ -33,6 +35,57 @@ export const levenshtein = (a: string, b: string): number => {
     }
   }
   return dp[m][n];
+};
+
+/**
+ * Génère les n-grams de taille `n` pour une chaîne donnée.
+ *
+ * Comportement par défaut : normalise la chaîne (minuscules, suppression des diacritiques,
+ * suppression de la ponctuation, collapse des espaces), supprime les espaces, puis
+ * génère des n-grams de caractères.
+ *
+ * @param s Chaîne d'entrée
+ * @param n Taille des n-grams (par défaut : 3)
+ * @param opts Options de génération
+ * @returns Tableau de n-grams (chaînes)
+ *
+ * @example
+ * ngrams('abcde', 3) // ['abc','bcd','cde']
+ */
+export const ngrams = (
+  s: string,
+  n: number = 3,
+  opts: NgramOptions = { normalize: true, pad: false, padChar: '_', preserveWhitespace: false },
+): string[] => {
+  const size = Math.max(1, Math.floor(n));
+  let str = String(s ?? '');
+
+  if (opts.normalize ?? true) {
+    str = normalizeString(str, opts.normalizeOpts ?? undefined);
+  }
+
+  if (!opts.preserveWhitespace) {
+    str = str.replace(/\s+/g, '');
+  }
+
+  if (opts.pad) {
+    const padChar = (opts.padChar ?? '_') || '_';
+    const pad = padChar.repeat(Math.max(0, size - 1));
+    str = pad + str + pad;
+  }
+
+  const out: string[] = [];
+  if (str.length === 0) return out;
+
+  if (str.length <= size) {
+    out.push(str);
+    return out;
+  }
+
+  for (let i = 0; i <= str.length - size; i++) {
+    out.push(str.substr(i, size));
+  }
+  return out;
 };
 
 /**

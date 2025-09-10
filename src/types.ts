@@ -31,3 +31,36 @@ export interface NormalizeOptions {
    */
   collapseWhitespace?: boolean;
 }
+
+/**
+ * Options pour la génération de n-grams.
+ */
+export type NgramOptions = {
+  /**
+   * Si true, applique `normalizeString` avant de générer les n-grams (par défaut : true).
+   */
+  normalize?: boolean;
+  /**
+   * Si true, ajoute un padding avec `padChar` en début et fin pour inclure les bords (par défaut : false).
+   */
+  pad?: boolean;
+  /** Caractère utilisé pour le padding (par défaut : '_'). */
+  padChar?: string;
+  /**
+   * Si true, conserve les espaces dans la chaîne avant génération; sinon les espaces sont supprimés (par défaut : false).
+   */
+  preserveWhitespace?: boolean;
+  /**
+   * Options passées à `normalizeString` si `normalize` est true.
+   */
+  normalizeOpts?: NormalizeOptions;
+};
+
+/**
+ * Options pour les embeddings simples basés sur n-grams et TF.
+ */
+export type EmbeddingOptions = {
+  n?: number; // taille des n-grams (défaut : 3)
+  minCount?: number; // fréquence minimale d'un token pour être dans le vocabulaire (défaut : 1)
+  ngramOpts?: NgramOptions; // options passées à ngrams
+};
