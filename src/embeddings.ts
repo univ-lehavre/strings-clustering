@@ -3,7 +3,21 @@ import { EmbeddingOptions, NgramOptions } from './types';
 
 /**
  * Construit un vocabulaire d'n-grams à partir d'un corpus.
- * Retourne un tableau de tokens triés par fréquence décroissante.
+ *
+ * Parcourt chaque document, génère ses n-grams (via `ngrams`) puis compte
+ * la fréquence de chaque token. Le vocabulaire retourné est trié par
+ * fréquence décroissante et ne contient que les tokens dont la fréquence est
+ * supérieure ou égale à `opts.minCount`.
+ *
+ * @param corpus Tableau de documents (chaînes) servant à construire le vocabulaire.
+ * @param opts Options :
+ *  - n : taille des n-grams (défaut : 3)
+ *  - minCount : fréquence minimale pour garder un token (défaut : 1)
+ *  - ngramOpts : options passées à `ngrams`
+ * @returns Tableau de tokens (n-grams) triés par fréquence décroissante.
+ *
+ * @example
+ * const vocab = fitNgramVocabulary(['abcde','abxyz'], { n: 3 });
  */
 export const fitNgramVocabulary = (
   corpus: string[],
@@ -26,7 +40,20 @@ export const fitNgramVocabulary = (
 };
 
 /**
- * Convertit un texte en un vecteur TF (normalisé L2) selon un vocabulaire donné.
+ * Convertit un texte en un vecteur TF (term-frequency) de taille `vocab.length`.
+ *
+ * Le vecteur est construit en comptant les n-grams présents dans `text` qui
+ * figurent dans `vocab`. Le vecteur final est normalisé en norme L2 (unit length)
+ * pour faciliter les comparaisons cosinus.
+ *
+ * @param text Texte d'entrée.
+ * @param vocab Vocabulaire (liste de tokens correspondant aux dimensions du vecteur).
+ * @param n Taille des n-grams utilisés pour tokenizer le texte (défaut : 3).
+ * @param ngramOpts Options passées à `ngrams`.
+ * @returns Vecteur de nombres (TF normalisé L2) de longueur `vocab.length`.
+ *
+ * @example
+ * const vec = textToTfVector('abcde', ['abc','bcd','cde'], 3);
  */
 export const textToTfVector = (
   text: string,
@@ -57,7 +84,12 @@ export const textToTfVector = (
 };
 
 /**
- * Embeds a single text using a vocabulary built previously.
+ * Convertit un texte en embedding en utilisant un vocabulaire préalablement construit.
+ *
+ * @param text Texte à encoder.
+ * @param vocab Vocabulaire d'n-grams.
+ * @param opts Options d'embedding (notamment `n` et `ngramOpts`).
+ * @returns Vecteur d'embedding (TF normalisé L2) correspondant au texte.
  */
 export const embedText = (
   text: string,
@@ -68,7 +100,15 @@ export const embedText = (
 };
 
 /**
- * Embeds a corpus of texts using a vocabulary built previously.
+ * Concatène les embeddings pour un corpus entier.
+ *
+ * Retourne un tableau de vecteurs, un par document, dans le même ordre que
+ * `texts`.
+ *
+ * @param texts Corpus (tableau de chaînes)
+ * @param vocab Vocabulaire d'n-grams
+ * @param opts Options d'embedding
+ * @returns Tableau de vecteurs (embeddings) normalisés L2
  */
 export const embedCorpus = (
   texts: string[],
@@ -79,7 +119,15 @@ export const embedCorpus = (
 };
 
 /**
- * Cosine similarity between two vectors.
+ * Calcule la similarité cosinus entre deux vecteurs.
+ *
+ * Les vecteurs peuvent être de longueurs différentes ; la fonction utilise la
+ * longueur minimale commune pour le produit scalaire. Si l'un des vecteurs est
+ * nul (norme 0), la similarité est 0.
+ *
+ * @param a Premier vecteur
+ * @param b Deuxième vecteur
+ * @returns Valeur de similarité cosinus dans [-1, 1]
  */
 export const cosine = (a: number[], b: number[]): number => {
   const n = Math.min(a.length, b.length);
