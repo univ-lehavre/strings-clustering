@@ -67,3 +67,36 @@ describe('textToTfVector', () => {
     expect(vec[0]).toBeGreaterThan(0);
   });
 });
+
+describe('embedText', () => {
+  it('équivaut à textToTfVector pour des options explicites', () => {
+    const vocab = ['abc', 'bcd', 'cde'];
+    const text = 'abcde';
+    const a = textToTfVector(text, vocab, 3);
+    const b = embedText(text, vocab, { n: 3 });
+    expect(b).toEqual(a);
+  });
+
+  it('respecte les ngramOpts (preserveWhitespace)', () => {
+    const vocab = ['a ', ' b'];
+    const v = embedText('a b', vocab, {
+      n: 2,
+      ngramOpts: { normalize: true, preserveWhitespace: true },
+    });
+    expect(v.some(x => x > 0)).toBeTruthy();
+  });
+
+  it('renvoie un vecteur nul pour un texte vide', () => {
+    const vocab = ['abc', 'bcd'];
+    const v = embedText('', vocab, { n: 3 });
+    expect(v.every(x => x === 0)).toBeTruthy();
+  });
+
+  it('utilise n=3 par défaut si non fourni dans opts', () => {
+    const vocab = ['abc', 'bcd', 'cde', 'def'];
+    // cast sûr sans utiliser `any`
+    const v1 = embedText('abcdef', vocab, {} as unknown as Parameters<typeof embedText>[2]);
+    const v2 = textToTfVector('abcdef', vocab, 3);
+    expect(v1).toEqual(v2);
+  });
+});
