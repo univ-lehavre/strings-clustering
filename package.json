@@ -4,7 +4,7 @@
   "description": "Regroupement de chaînes de caractères par similarité",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -fR dist && tsc",
     "start:only": "node --env-file .env ./dist/index.js",
     "start": "pnpm run build && pnpm run start:only",
     "types:check": "tsc --noEmit",
