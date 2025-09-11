@@ -1,11 +1,38 @@
-import type { NgramOptions, NormalizeOptions } from './types';
+import { Brand } from 'effect';
+import type {
+  NgramOptions,
+  NormalizeOptions,
+  NormalizedString,
+  Ngrams,
+  Levenshtein,
+} from './types';
+
+export const asLevenshtein = Brand.nominal<Levenshtein>();
 
 /**
  * Calcule la distance de Levenshtein entre deux chaînes de caractères.
  *
+ * SYNOPSIS
+ *
  * La distance de Levenshtein est le nombre minimum d'opérations requises pour transformer
  * une chaîne en une autre, les opérations étant l'insertion, la suppression ou la substitution
  * d'un caractère.
+ *
+ * Interprétation rapide :
+ * - Une distance de 0 signifie que les chaînes sont identiques.
+ * - Une petite distance (1-3) indique que les chaînes sont très similaires.
+ * - Une distance proche de la longueur des chaînes suggère qu'elles sont très différentes.
+ *
+ * Cas pratiques / utilité :
+ * - Correction orthographique : trouver des mots proches d'un mot mal orthographié.
+ * - Regroupement de labels similaires : identifier des variantes proches dans des noms ou adresses.
+ * - Filtrage de doublons "proches" avant clustering : éviter les répétitions quasi-identiques.
+ *
+ * Notes finales :
+ * - L'algorithme utilisé est une approche de programmation dynamique avec une complexité en temps O(m*n)
+ *   et en espace O(m*n), où m et n sont les longueurs des deux chaînes.
+ * - Pour des chaînes très longues, des versions optimisées en espace O(min(m,n)) existent.
+ * - La distance de Levenshtein est robuste pour détecter de petits changements, mais peut être coûteuse à grande échelle.
  *
  * @param a La première chaîne.
  * @param b La deuxième chaîne.
@@ -15,7 +42,8 @@ import type { NgramOptions, NormalizeOptions } from './types';
  * const distance = levenshtein('chat', 'chats');
  * console.log(distance); // 1
  */
-export const levenshtein = (a: string, b: string): number => {
+
+export const levenshtein = (a: string, b: string): Levenshtein => {
   const m = a.length;
   const n = b.length;
   const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -32,11 +60,15 @@ export const levenshtein = (a: string, b: string): number => {
       }
     }
   }
-  return dp[m][n];
+
+  const result = dp[m][n];
+  return asLevenshtein(result);
 };
 
+const asNgrams = Brand.nominal<Ngrams>();
+
 /**
- * Génère les n-grams de taille `n` pour une chaîne donnée.
+ * Génère tous les n-grams de taille `n` pour une chaîne donnée, sans gestion des doublons
  *
  * Comportement par défaut : normalise la chaîne (minuscules, suppression des diacritiques,
  * suppression de la ponctuation, collapse des espaces), supprime les espaces, puis
@@ -52,10 +84,10 @@ export const levenshtein = (a: string, b: string): number => {
  */
 export const ngrams = (
   s: string,
-  n: number = 3,
+  n: number,
   opts: NgramOptions = { normalize: true, pad: false, padChar: '_', preserveWhitespace: false },
-): string[] => {
-  const size = Math.max(1, Math.floor(n));
+): Ngrams => {
+  const size = Math.max(1, Math.min(Math.floor(n), s.length));
   let str = String(s ?? '');
 
   if (opts.normalize ?? true) {
@@ -73,18 +105,38 @@ export const ngrams = (
   }
 
   const out: string[] = [];
-  if (str.length === 0) return out;
+  if (str.length === 0) return asNgrams(out);
 
   if (str.length <= size) {
     out.push(str);
-    return out;
+    return asNgrams(out);
   }
 
   for (let i = 0; i <= str.length - size; i++) {
-    out.push(str.substr(i, size));
+    out.push(str.substring(i, i + size));
   }
-  return out;
+  return asNgrams(out);
 };
+
+interface AllNgramsOptions {
+  minN: number;
+  maxN: number;
+  ngramOptions?: NgramOptions;
+}
+
+export const allNgrams = (
+  s: string,
+  opts: AllNgramsOptions = { minN: 1, maxN: s.length },
+): Ngrams => {
+  const out: string[] = [];
+  for (let n = opts.minN; n <= opts.maxN; n++) {
+    const toks = ngrams(s, n, opts.ngramOptions);
+    for (const t of toks) out.push(t);
+  }
+  return asNgrams(out);
+};
+
+const asNormalizedString = Brand.nominal<NormalizedString>();
 
 /**
  * Normalise une chaîne de caractères pour comparaison.
@@ -105,7 +157,7 @@ export const normalizeString = (
     removePunctuation: true,
     collapseWhitespace: true,
   },
-): string => {
+): NormalizedString => {
   let out = String(s ?? '');
   if (opts.removeDiacritics) {
     out = out.normalize('NFD').replace(/\p{M}/gu, '');
@@ -120,5 +172,5 @@ export const normalizeString = (
   if (opts.collapseWhitespace) {
     out = out.replace(/\s+/g, ' ').trim();
   }
-  return out;
+  return asNormalizedString(out);
 };
