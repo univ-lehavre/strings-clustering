@@ -1,14 +1,14 @@
-import { Brand } from 'effect';
-import type {
-  NgramOptions,
-  NormalizeOptions,
-  NormalizedString,
-  Ngrams,
-  Levenshtein,
-  AllNgramsOptions,
+import {
+  type NgramOptions,
+  type NormalizeOptions,
+  type NormalizedString,
+  type Token,
+  type Levenshtein,
+  type AllNgramsOptions,
+  asNormalizedString,
+  asLevenshtein,
+  asToken,
 } from './types';
-
-const asNormalizedString = Brand.nominal<NormalizedString>();
 
 /**
  * Normalise une chaîne de caractères pour comparaison.
@@ -46,8 +46,6 @@ export const normalizeString = (
   }
   return asNormalizedString(out);
 };
-
-export const asLevenshtein = Brand.nominal<Levenshtein>();
 
 /**
  * Calcule la distance de Levenshtein entre deux chaînes de caractères.
@@ -105,8 +103,6 @@ export const levenshtein = (a: string, b: string): Levenshtein => {
   return asLevenshtein(result);
 };
 
-const asNgrams = Brand.nominal<Ngrams>();
-
 /**
  * Génère tous les n-grams de taille `n` pour une chaîne donnée, sans gestion des doublons
  *
@@ -126,8 +122,9 @@ export const ngrams = (
   s: string,
   n: number,
   opts: NgramOptions = { normalize: true, pad: false, padChar: '_', preserveWhitespace: false },
-): Ngrams => {
-  const size = Math.max(1, Math.min(Math.floor(n), s.length));
+): Token[] => {
+  if (s.length < 2) return [];
+  const size = Math.max(2, Math.min(10, Math.floor(n), s.length));
   let str = String(s ?? '');
 
   if (opts.normalize ?? true) {
@@ -144,28 +141,28 @@ export const ngrams = (
     str = pad + str + pad;
   }
 
-  const out: string[] = [];
-  if (str.length === 0) return asNgrams(out);
+  const out: Token[] = [];
+  if (str.length === 0) return out;
 
   if (str.length <= size) {
-    out.push(str);
-    return asNgrams(out);
+    out.push(asToken(str));
+    return out;
   }
 
   for (let i = 0; i <= str.length - size; i++) {
-    out.push(str.substring(i, i + size));
+    out.push(asToken(str.substring(i, i + size)));
   }
-  return asNgrams(out);
+  return out;
 };
 
-export const allNgrams = (
-  s: string,
-  opts: AllNgramsOptions = { minN: 1, maxN: s.length },
-): Ngrams => {
-  const out: string[] = [];
+export const allNgrams = (s: string, opts: AllNgramsOptions): Token[] => {
+  opts.minN = opts.minN ?? 2;
+  opts.maxN = opts.maxN ?? Math.min(10, s.length);
+  if (s.length < 2 || opts.minN > opts.maxN) return [];
+  const out: Token[] = [];
   for (let n = opts.minN; n <= opts.maxN; n++) {
     const toks = ngrams(s, n, opts.ngramOptions);
     for (const t of toks) out.push(t);
   }
-  return asNgrams(out);
+  return out;
 };

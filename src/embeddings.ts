@@ -1,12 +1,86 @@
 import { Brand } from 'effect';
-import { ngrams } from './utils';
+import { allNgrams, ngrams } from './utils';
 import type {
   EmbeddingOptions,
   Corpus,
   NgramOptions,
   FitNgramVocabulary,
   TextToTfVector,
+  AllNgramsOptions,
+  Token,
 } from './types';
+
+export const tokensCorpus = (corpus: string[], opts: AllNgramsOptions): Token[][] => {
+  const results: Token[][] = [];
+  for (const doc of corpus) {
+    const toks = allNgrams(doc, opts);
+    results.push(toks);
+  }
+  return results;
+};
+
+export type Frequency = number & Brand.Brand<'Frequency'>;
+export const asFrequency = Brand.nominal<Frequency>();
+export type TfCorpus = Frequency[][] & Brand.Brand<'TfCorpus'>;
+export const asTfCorpus = Brand.nominal<TfCorpus>();
+
+export const tfCorpus = (tokensCorpus: Token[][]): Map<Token, Frequency>[] => {
+  const countsCorpus: Map<Token, Frequency>[] = [];
+  for (const doc of tokensCorpus) {
+    const counts = new Map<Token, number>();
+    const tf = new Map<Token, Frequency>();
+    for (const t of doc) counts.set(t, (counts.get(t) ?? 0) + 1);
+    const total = doc.length;
+    for (const [t, c] of counts.entries()) tf.set(t, asFrequency(c / total));
+    countsCorpus.push(tf);
+  }
+  return countsCorpus;
+};
+
+export const vocabulary = (tfCorpus: Map<Token, Frequency>[]): Token[] => {
+  const vocabSet = new Set<Token>();
+  for (const doc of tfCorpus) {
+    for (const token of doc.keys()) {
+      vocabSet.add(token);
+    }
+  }
+  return Array.from(vocabSet);
+};
+
+export const idf = (tfCorpus: Map<Token, Frequency>[], vocabulary: Token[]): Map<Token, number> => {
+  const df = new Map<Token, number>();
+  for (const token of vocabulary) {
+    for (const doc of tfCorpus) {
+      if (doc.has(token)) {
+        df.set(token, (df.get(token) ?? 0) + 1);
+      }
+    }
+  }
+  const idf = new Map<Token, number>();
+  const N = tfCorpus.length;
+  for (const token of vocabulary) {
+    const docFreq = df.get(token) ?? 0;
+    idf.set(token, Math.log((N + 1) / (docFreq + 1)) + 1);
+  }
+  return idf;
+};
+
+export const tfidfCorpus = (
+  tfCorpus: Map<Token, Frequency>[],
+  vocabulary: Token[],
+): Map<Token, number>[] => {
+  const idfValues = idf(tfCorpus, vocabulary);
+  const tfidfCorpus: Map<Token, number>[] = [];
+  for (const doc of tfCorpus) {
+    const tfidfDoc = new Map<Token, number>();
+    for (const [token, tf] of doc.entries()) {
+      const idfValue = idfValues.get(token) ?? 0;
+      tfidfDoc.set(token, tf * idfValue);
+    }
+    tfidfCorpus.push(tfidfDoc);
+  }
+  return tfidfCorpus;
+};
 
 export const asCorpus = Brand.nominal<Corpus>();
 export const asFitNgramVocabulary = Brand.nominal<FitNgramVocabulary>();

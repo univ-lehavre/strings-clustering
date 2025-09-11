@@ -131,13 +131,17 @@ export type EmbeddingOptions = {
  * const normalized = normalizeString(raw) as NormalizedString;
  */
 export type NormalizedString = string & Brand.Brand<'NormalizedString'>;
+export const asNormalizedString = Brand.nominal<NormalizedString>();
 
 /**
  * Type brandé représentant une liste de n-grams (tokens).
  *
  * Chaque élément correspond à un token extrait d'une chaîne (ex. ['_ab', 'abc', 'bc_']).
  */
-export type Ngrams = string[] & Brand.Brand<'Ngrams'>;
+export type Token = string & Brand.Brand<'Token'>;
+export const asToken = Brand.nominal<Token>();
+export type Ngrams = Token[] & Brand.Brand<'Ngrams'>;
+export const asNgrams = Brand.nominal<Ngrams>();
 
 /**
  * Type brandé représentant un corpus : tableau de documents/chaînes.
@@ -159,6 +163,9 @@ export type FitNgramVocabulary = string[] & Brand.Brand<'FitNgramVocabulary'>;
  * Valeur entière >= 0. La borne supérieure dépend des longueurs comparées.
  */
 export type Levenshtein = number & Brand.Brand<'Levenshtein'>;
+export const asLevenshtein = Brand.nominal<Levenshtein>();
+export type TokenCorpus = Token[] & Brand.Brand<'TokenCorpus'>;
+export const asTokenCorpus = Brand.nominal<TokenCorpus>();
 
 /**
  * Vecteur TF (term-frequency) produit à partir d'un texte et du vocabulaire.
@@ -169,7 +176,7 @@ export type Levenshtein = number & Brand.Brand<'Levenshtein'>;
 export type TextToTfVector = number[] & Brand.Brand<'TextToTfVector'>;
 
 export interface AllNgramsOptions {
-  minN: number;
-  maxN: number;
+  minN?: number;
+  maxN?: number;
   ngramOptions?: NgramOptions;
 }
