@@ -123,8 +123,8 @@ export const ngrams = (
   n: number,
   opts: NgramOptions = { normalize: true, pad: false, padChar: '_', preserveWhitespace: false },
 ): Token[] => {
-  if (s.length < 2) return [];
-  const size = Math.max(2, Math.min(10, Math.floor(n), s.length));
+  if (s.length < 1) return [];
+  const size = Math.max(1, Math.min(10, Math.floor(n), s.length));
   let str = String(s ?? '');
 
   if (opts.normalize ?? true) {
@@ -156,9 +156,9 @@ export const ngrams = (
 };
 
 export const allNgrams = (s: string, opts: AllNgramsOptions): Token[] => {
-  opts.minN = opts.minN ?? 2;
+  opts.minN = opts.minN ?? 1;
   opts.maxN = opts.maxN ?? Math.min(10, s.length);
-  if (s.length < 2 || opts.minN > opts.maxN) return [];
+  if (s.length < 1 || opts.minN > opts.maxN) return [];
   const out: Token[] = [];
   for (let n = opts.minN; n <= opts.maxN; n++) {
     const toks = ngrams(s, n, opts.ngramOptions);

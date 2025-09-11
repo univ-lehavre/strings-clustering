@@ -82,6 +82,27 @@ export const tfidfCorpus = (
   return tfidfCorpus;
 };
 
+/**
+ * Applique la normalisation softmax à chaque document TF-IDF.
+ * @param tfidfDocs Tableau de Map<Token, number> (documents TF-IDF)
+ * @returns Tableau de Map<Token, number> où chaque document est normalisé softmax
+ */
+export const softmaxTfidf = (tfidfDocs: Map<Token, number>[]): Map<Token, number>[] => {
+  return tfidfDocs.map(doc => {
+    // Pour la stabilité numérique, soustraire le max avant l'exponentielle
+    const values = Array.from(doc.values());
+    const maxVal = Math.max(...values);
+    const expValues = values.map(v => Math.exp(v - maxVal));
+    const sumExp = expValues.reduce((acc, v) => acc + v, 0);
+    const tokens = Array.from(doc.keys());
+    const normalized = new Map<Token, number>();
+    for (let i = 0; i < tokens.length; i++) {
+      normalized.set(tokens[i], expValues[i] / sumExp);
+    }
+    return normalized;
+  });
+};
+
 export const asCorpus = Brand.nominal<Corpus>();
 export const asFitNgramVocabulary = Brand.nominal<FitNgramVocabulary>();
 
