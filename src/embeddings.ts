@@ -103,6 +103,27 @@ export const softmaxTfidf = (tfidfDocs: Map<Token, number>[]): Map<Token, number
   });
 };
 
+// Une fonction transformant une matrice sparse Map<Token, number>[] en une matrice dense number[][]
+export const sparseToDense = (
+  sparseDocs: Map<Token, number>[],
+  vocabulary: Token[],
+): number[][] => {
+  const denseDocs: number[][] = [];
+  const tokenIndex = new Map<Token, number>();
+  vocabulary.forEach((token, idx) => tokenIndex.set(token, idx));
+  for (const doc of sparseDocs) {
+    const denseDoc = new Array(vocabulary.length).fill(0);
+    for (const [token, value] of doc.entries()) {
+      const idx = tokenIndex.get(token);
+      if (idx !== undefined) {
+        denseDoc[idx] = value;
+      }
+    }
+    denseDocs.push(denseDoc);
+  }
+  return denseDocs;
+};
+
 export const asCorpus = Brand.nominal<Corpus>();
 export const asFitNgramVocabulary = Brand.nominal<FitNgramVocabulary>();
 
