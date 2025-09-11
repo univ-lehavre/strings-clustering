@@ -1,5 +1,15 @@
+import { Brand } from 'effect';
 import { ngrams } from './utils';
-import { EmbeddingOptions, NgramOptions } from './types';
+import type {
+  EmbeddingOptions,
+  Corpus,
+  NgramOptions,
+  FitNgramVocabulary,
+  TextToTfVector,
+} from './types';
+
+export const asCorpus = Brand.nominal<Corpus>();
+export const asFitNgramVocabulary = Brand.nominal<FitNgramVocabulary>();
 
 /**
  * Construit un vocabulaire d'n-grams à partir d'un corpus.
@@ -20,9 +30,9 @@ import { EmbeddingOptions, NgramOptions } from './types';
  * const vocab = fitNgramVocabulary(['abcde','abxyz'], { n: 3 });
  */
 export const fitNgramVocabulary = (
-  corpus: string[],
+  corpus: Corpus,
   opts: EmbeddingOptions = { n: 3, minCount: 1 },
-): string[] => {
+): FitNgramVocabulary => {
   const n = opts.n ?? 3;
   const minCount = Math.max(1, opts.minCount ?? 1);
   const counts = new Map<string, number>();
@@ -36,8 +46,11 @@ export const fitNgramVocabulary = (
   }
   const tokens = Array.from(counts.entries()).filter(([, c]) => c >= minCount);
   tokens.sort((a, b) => b[1] - a[1]);
-  return tokens.map(([t]) => t);
+  const result = tokens.map(([t]) => t);
+  return asFitNgramVocabulary(result);
 };
+
+const TextToTfVector = Brand.nominal<TextToTfVector>();
 
 /**
  * Convertit un texte en un vecteur TF (term-frequency) de taille `vocab.length`.
@@ -60,9 +73,9 @@ export const textToTfVector = (
   vocab: string[],
   n: number = 3,
   ngramOpts?: NgramOptions,
-): number[] => {
+): TextToTfVector => {
   const vec = new Array(vocab.length).fill(0);
-  if (!text || vocab.length === 0) return vec;
+  if (!text || vocab.length === 0) return TextToTfVector(vec);
   const toks = ngrams(
     text,
     n,
@@ -78,9 +91,9 @@ export const textToTfVector = (
   let norm = 0;
   for (const v of vec) norm += v * v;
   norm = Math.sqrt(norm);
-  if (norm === 0) return vec;
+  if (norm === 0) return TextToTfVector(vec);
   for (let i = 0; i < vec.length; i++) vec[i] = vec[i] / norm;
-  return vec;
+  return TextToTfVector(vec);
 };
 
 /**
