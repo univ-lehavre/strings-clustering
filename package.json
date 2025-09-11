@@ -41,5 +41,8 @@
     "tsx": "^3.14.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0"
+  },
+  "dependencies": {
+    "effect": "^3.17.13"
   }
 }
