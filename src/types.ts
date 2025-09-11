@@ -105,14 +105,14 @@ export type EmbeddingOptions = {
    * Taille des n-grams à utiliser pour la tokenisation.
    * @default 3
    */
-  n?: number;
+  n: number;
 
   /**
    * Fréquence minimale d'un token pour être conservé dans le vocabulaire. Les tokens
    * dont la fréquence est inférieure à `minCount` sont filtrés.
    * @default 1
    */
-  minCount?: number;
+  minCount: number;
 
   /**
    * Options passées à la fonction de génération des n-grams.
@@ -167,3 +167,9 @@ export type Levenshtein = number & Brand.Brand<'Levenshtein'>;
  * tableau est égale à la taille du vocabulaire utilisé.
  */
 export type TextToTfVector = number[] & Brand.Brand<'TextToTfVector'>;
+
+export interface AllNgramsOptions {
+  minN: number;
+  maxN: number;
+  ngramOptions?: NgramOptions;
+}

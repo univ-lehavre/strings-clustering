@@ -5,7 +5,47 @@ import type {
   NormalizedString,
   Ngrams,
   Levenshtein,
+  AllNgramsOptions,
 } from './types';
+
+const asNormalizedString = Brand.nominal<NormalizedString>();
+
+/**
+ * Normalise une chaîne de caractères pour comparaison.
+ *
+ * - retire les accents (NFD + suppression des marques)
+ * - met en minuscules (optionnel)
+ * - remplace les caractères non alphanumériques par des espaces (optionnel)
+ * - réduit les espaces multiples en un seul et tronque
+ *
+ * @param s Chaîne d'entrée
+ * @param opts Options de normalisation
+ */
+export const normalizeString = (
+  s: string,
+  opts: NormalizeOptions = {
+    toLowerCase: true,
+    removeDiacritics: true,
+    removePunctuation: true,
+    collapseWhitespace: true,
+  },
+): NormalizedString => {
+  let out = String(s ?? '');
+  if (opts.removeDiacritics) {
+    out = out.normalize('NFD').replace(/\p{M}/gu, '');
+  }
+  if (opts.toLowerCase) {
+    out = out.toLowerCase();
+  }
+  if (opts.removePunctuation) {
+    // Keep letters and numbers; replace other chars with space
+    out = out.replace(/[^\p{L}\p{N}]+/gu, ' ');
+  }
+  if (opts.collapseWhitespace) {
+    out = out.replace(/\s+/g, ' ').trim();
+  }
+  return asNormalizedString(out);
+};
 
 export const asLevenshtein = Brand.nominal<Levenshtein>();
 
@@ -118,12 +158,6 @@ export const ngrams = (
   return asNgrams(out);
 };
 
-interface AllNgramsOptions {
-  minN: number;
-  maxN: number;
-  ngramOptions?: NgramOptions;
-}
-
 export const allNgrams = (
   s: string,
   opts: AllNgramsOptions = { minN: 1, maxN: s.length },
@@ -134,43 +168,4 @@ export const allNgrams = (
     for (const t of toks) out.push(t);
   }
   return asNgrams(out);
-};
-
-const asNormalizedString = Brand.nominal<NormalizedString>();
-
-/**
- * Normalise une chaîne de caractères pour comparaison.
- *
- * - retire les accents (NFD + suppression des marques)
- * - met en minuscules (optionnel)
- * - remplace les caractères non alphanumériques par des espaces (optionnel)
- * - réduit les espaces multiples en un seul et tronque
- *
- * @param s Chaîne d'entrée
- * @param opts Options de normalisation
- */
-export const normalizeString = (
-  s: string,
-  opts: NormalizeOptions = {
-    toLowerCase: true,
-    removeDiacritics: true,
-    removePunctuation: true,
-    collapseWhitespace: true,
-  },
-): NormalizedString => {
-  let out = String(s ?? '');
-  if (opts.removeDiacritics) {
-    out = out.normalize('NFD').replace(/\p{M}/gu, '');
-  }
-  if (opts.toLowerCase) {
-    out = out.toLowerCase();
-  }
-  if (opts.removePunctuation) {
-    // Keep letters and numbers; replace other chars with space
-    out = out.replace(/[^\p{L}\p{N}]+/gu, ' ');
-  }
-  if (opts.collapseWhitespace) {
-    out = out.replace(/\s+/g, ' ').trim();
-  }
-  return asNormalizedString(out);
 };

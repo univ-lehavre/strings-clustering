@@ -33,20 +33,19 @@ export const fitNgramVocabulary = (
   corpus: Corpus,
   opts: EmbeddingOptions = { n: 3, minCount: 1 },
 ): FitNgramVocabulary => {
-  const n = opts.n ?? 3;
-  const minCount = Math.max(1, opts.minCount ?? 1);
   const counts = new Map<string, number>();
   for (const doc of corpus) {
-    const toks = ngrams(
-      doc,
-      n,
-      opts.ngramOpts ?? { normalize: true, pad: false, padChar: '_', preserveWhitespace: false },
-    );
+    const toks = ngrams(doc, opts.n, opts.ngramOpts);
     for (const t of toks) counts.set(t, (counts.get(t) ?? 0) + 1);
   }
-  const tokens = Array.from(counts.entries()).filter(([, c]) => c >= minCount);
-  tokens.sort((a, b) => b[1] - a[1]);
-  const result = tokens.map(([t]) => t);
+  // Récupération des tokens et de leurs comptes
+  const tokens = Array.from(counts.entries());
+  // Suppression de tous les tokens en dessous de minCount
+  const filtered_tokens = tokens.filter(([, c]) => c >= opts.minCount);
+  // Tri par fréquence décroissante
+  filtered_tokens.sort((a, b) => b[1] - a[1]);
+  // Extraction de la liste de tokens
+  const result = filtered_tokens.map(([t]) => t);
   return asFitNgramVocabulary(result);
 };
 
@@ -76,11 +75,7 @@ export const textToTfVector = (
 ): TextToTfVector => {
   const vec = new Array(vocab.length).fill(0);
   if (!text || vocab.length === 0) return TextToTfVector(vec);
-  const toks = ngrams(
-    text,
-    n,
-    ngramOpts ?? { normalize: true, pad: false, padChar: '_', preserveWhitespace: false },
-  );
+  const toks = ngrams(text, n, ngramOpts);
   const index = new Map<string, number>();
   vocab.forEach((t, i) => index.set(t, i));
   for (const t of toks) {
@@ -104,11 +99,7 @@ export const textToTfVector = (
  * @param opts Options d'embedding (notamment `n` et `ngramOpts`).
  * @returns Vecteur d'embedding (TF normalisé L2) correspondant au texte.
  */
-export const embedText = (
-  text: string,
-  vocab: string[],
-  opts: EmbeddingOptions = { n: 3 },
-): number[] => {
+export const embedText = (text: string, vocab: string[], opts: EmbeddingOptions): number[] => {
   return textToTfVector(text, vocab, opts.n ?? 3, opts.ngramOpts);
 };
 
@@ -126,7 +117,7 @@ export const embedText = (
 export const embedCorpus = (
   texts: string[],
   vocab: string[],
-  opts: EmbeddingOptions = { n: 3 },
+  opts: EmbeddingOptions,
 ): number[][] => {
   return texts.map(t => embedText(t, vocab, opts));
 };
