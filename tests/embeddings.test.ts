@@ -11,6 +11,7 @@ import {
   dominantTopicIndexForOneDocument,
   dominantDocumentIndexForOneTopic,
   documentsForOneDominantTopic,
+  groupMultiSelect,
 } from '../src';
 import { DenseMatrix } from '@univ-lehavre/ts-matrix';
 
@@ -255,10 +256,34 @@ describe('embeddings', () => {
     expect([0, 1]).toContain(tieIdx);
   });
 
-  it("dominantDocumentIndexForOneTopic lève une erreur pour index de topic hors limites", () => {
+  it('dominantDocumentIndexForOneTopic lève une erreur pour index de topic hors limites', () => {
     const matrixData = [[0.1, 0.9]]; // 1x2
     const dm = new DenseMatrix(matrixData, { nonNegative: true });
     expect(() => dominantDocumentIndexForOneTopic(dm, -1)).toThrow();
     expect(() => dominantDocumentIndexForOneTopic(dm, 5)).toThrow();
+  });
+
+  it('groupMultiSelect regroupe correctement les documents par topic dominant', () => {
+    // matrice 4 documents x 3 topics
+    const matrixData = [
+      [0.9, 0.1, 0.0], // doc0 -> topic0
+      [0.0, 0.8, 0.2], // doc1 -> topic1
+      [0.7, 0.2, 0.1], // doc2 -> topic0
+      [0.1, 0.0, 0.9], // doc3 -> topic2
+    ];
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+    const corpus = ['doc0', 'doc1', 'doc2', 'doc3'];
+
+    const grouped = groupMultiSelect(dm, corpus);
+
+    // vérifier que les clés contiennent les titres dominants
+    const keys = Object.keys(grouped);
+    // Les titres doivent être les documents dominants pour chaque topic
+    expect(keys).toEqual(expect.arrayContaining([corpus[0], corpus[1], corpus[3]]));
+
+    // vérifier que les listes contiennent les bons documents
+    expect(grouped[corpus[0]].sort()).toEqual(['doc0', 'doc2'].sort());
+    expect(grouped[corpus[1]]).toEqual(['doc1']);
+    expect(grouped[corpus[3]]).toEqual(['doc3']);
   });
 });
