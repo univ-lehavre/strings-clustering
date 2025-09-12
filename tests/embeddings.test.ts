@@ -9,6 +9,7 @@ import {
   sparseToDense,
   asFrequency,
   dominantTopicIndexForOneDocument,
+  dominantDocumentIndexForOneTopic,
   documentsForOneDominantTopic,
 } from '../src';
 import { DenseMatrix } from '@univ-lehavre/ts-matrix';
@@ -224,5 +225,40 @@ describe('embeddings', () => {
     const corpus = ['only'];
     expect(() => documentsForOneDominantTopic(dm, -1, corpus)).toThrow();
     expect(() => documentsForOneDominantTopic(dm, 5, corpus)).toThrow();
+  });
+
+  it("dominantDocumentIndexForOneTopic retourne l'indice du document dominant (cas simple et tie)", () => {
+    // Matrice 3 documents x 2 topics
+    // colonne 0 : max en doc0
+    // colonne 1 : max en doc2
+    const matrixData = [
+      [0.9, 0.1],
+      [0.8, 0.2],
+      [0.1, 0.9],
+    ];
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+
+    const idxCol0 = dominantDocumentIndexForOneTopic(dm, 0);
+    const idxCol1 = dominantDocumentIndexForOneTopic(dm, 1);
+
+    expect(idxCol0).toBe(0);
+    expect(idxCol1).toBe(2);
+
+    // Cas d'égalité (tie) pour la colonne 0 entre doc0 et doc1
+    const tieData = [
+      [0.5, 0.2],
+      [0.5, 0.1],
+      [0.1, 0.7],
+    ];
+    const dmTie = new DenseMatrix(tieData, { nonNegative: true });
+    const tieIdx = dominantDocumentIndexForOneTopic(dmTie, 0);
+    expect([0, 1]).toContain(tieIdx);
+  });
+
+  it("dominantDocumentIndexForOneTopic lève une erreur pour index de topic hors limites", () => {
+    const matrixData = [[0.1, 0.9]]; // 1x2
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+    expect(() => dominantDocumentIndexForOneTopic(dm, -1)).toThrow();
+    expect(() => dominantDocumentIndexForOneTopic(dm, 5)).toThrow();
   });
 });
