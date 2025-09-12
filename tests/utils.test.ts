@@ -1,6 +1,60 @@
 import { levenshtein, ngrams, normalizeString, allNgrams } from '../src/utils';
 
 describe('normalizeString', () => {
+  it('ne modifie pas la chaîne si toutes les options sont à false', () => {
+    expect(
+      normalizeString('École, 42!', {
+        toLowerCase: false,
+        removeDiacritics: false,
+        removePunctuation: false,
+        collapseWhitespace: false,
+      }),
+    ).toBe('École, 42!');
+  });
+
+  it('gère la ponctuation', () => {
+    expect(
+      normalizeString('A.B,C', {
+        toLowerCase: false,
+        removeDiacritics: false,
+        removePunctuation: true,
+        collapseWhitespace: false,
+      }),
+    ).toBe('A B C');
+  });
+
+  it('gère la suppression des diacritiques uniquement', () => {
+    expect(
+      normalizeString('École', {
+        toLowerCase: false,
+        removeDiacritics: true,
+        removePunctuation: false,
+        collapseWhitespace: false,
+      }),
+    ).toBe('Ecole');
+  });
+
+  it('gère la conversion en minuscules uniquement', () => {
+    expect(
+      normalizeString('École', {
+        toLowerCase: true,
+        removeDiacritics: false,
+        removePunctuation: false,
+        collapseWhitespace: false,
+      }),
+    ).toBe('école');
+  });
+
+  it('gère la collapseWhitespace uniquement', () => {
+    expect(
+      normalizeString('A   B   C', {
+        toLowerCase: false,
+        removeDiacritics: false,
+        removePunctuation: false,
+        collapseWhitespace: true,
+      }),
+    ).toBe('A B C');
+  });
   it('supprime les diacritiques et met en minuscules', () => {
     expect(normalizeString('École')).toBe('ecole');
     expect(normalizeString('École', { toLowerCase: true, removeDiacritics: true })).toBe('ecole');
@@ -68,6 +122,30 @@ describe('levenshtein', () => {
 });
 
 describe('ngrams', () => {
+  it('retourne [] pour une chaîne vide', () => {
+    expect(ngrams('', 3)).toEqual([]);
+  });
+
+  it('retourne le ngram unique si la chaîne est plus courte que n', () => {
+    expect(ngrams('ab', 3)).toEqual(['ab']);
+  });
+
+  it('pad avec un autre caractère', () => {
+    expect(ngrams('abc', 2, { pad: true, padChar: '*' })).toEqual(['*a', 'ab', 'bc', 'c*']);
+  });
+
+  it('utilise normalizeOpts pour la normalisation', () => {
+    expect(
+      ngrams('École', 2, {
+        normalize: true,
+        normalizeOpts: { toLowerCase: false, removeDiacritics: true },
+      }),
+    ).toEqual(['Ec', 'co', 'ol', 'le']);
+  });
+
+  it('conserve les espaces si preserveWhitespace', () => {
+    expect(ngrams('a b', 2, { preserveWhitespace: true })).toEqual(['a ', ' b']);
+  });
   it('génère des n-grams simples', () => {
     expect(ngrams('abcde', 3)).toEqual(['abc', 'bcd', 'cde']);
     expect(ngrams('abcde', 3, { normalize: false })).toEqual(['abc', 'bcd', 'cde']);
@@ -99,7 +177,27 @@ describe('ngrams', () => {
 });
 
 describe('allNgrams', () => {
-  it("allNgrams génère l'ensemble attendu pour minN=1 et maxN=2", () => {
+  it('retourne [] si la chaîne est vide', () => {
+    expect(allNgrams('', { minN: 1, maxN: 3 })).toEqual([]);
+  });
+
+  it('retourne [] si minN > maxN', () => {
+    expect(allNgrams('abc', { minN: 4, maxN: 2 })).toEqual([]);
+  });
+
+  it('utilise ngramOptions pour la normalisation', () => {
+    const toks = allNgrams('École', {
+      minN: 2,
+      maxN: 2,
+      ngramOptions: {
+        normalize: true,
+        normalizeOpts: { toLowerCase: false, removeDiacritics: true },
+      },
+    });
+    expect(toks).toEqual(['Ec', 'co', 'ol', 'le']);
+  });
+
+  it("génère l'ensemble attendu pour minN=1 et maxN=2", () => {
     const toks = allNgrams('abc', { minN: 1, maxN: 2 });
     // Convertir en tableau trié pour comparaison déterministe
     const got = Array.from(toks).sort();

@@ -11,6 +11,93 @@ import {
 } from '../src';
 
 describe('embeddings', () => {
+  it('tokensCorpus gère un corpus vide', () => {
+    const toks = tokensCorpus([], { minN: 2, maxN: 2 });
+    expect(toks).toEqual([]);
+  });
+
+  it('tokensCorpus gère les options avancées', () => {
+    const corpus = ['École', 'abc'];
+    const toks = tokensCorpus(corpus, {
+      minN: 2,
+      maxN: 3,
+      ngramOptions: { normalize: true, pad: true, padChar: '*', preserveWhitespace: true },
+    });
+    expect(toks.length).toBe(2);
+    expect(toks[0].some(t => typeof t === 'string')).toBe(true);
+    expect(toks[1].some(t => typeof t === 'string')).toBe(true);
+  });
+
+  it('tfCorpus gère un document vide', () => {
+    const tf = tfCorpus([[]]);
+    expect(tf[0].size).toBe(0);
+  });
+
+  it('tfCorpus gère plusieurs documents', () => {
+    const toks = [
+      [asToken('a'), asToken('b')],
+      [asToken('b'), asToken('c')],
+    ];
+    const tf = tfCorpus(toks);
+    expect(tf.length).toBe(2);
+    expect(tf[0].get(asToken('a'))).toBeCloseTo(0.5);
+    expect(tf[1].get(asToken('c'))).toBeCloseTo(0.5);
+  });
+
+  it('vocabulary gère un corpus vide', () => {
+    const vocab = vocabulary([]);
+    expect(vocab).toEqual([]);
+  });
+
+  it('idf gère un vocabulaire vide', () => {
+    const tf = [new Map([[asToken('a'), asFrequency(1)]])];
+    const idfMap = idf(tf, []);
+    expect(idfMap.size).toBe(0);
+  });
+
+  it('idf gère un corpus vide', () => {
+    const idfMap = idf([], [asToken('a')]);
+    expect(idfMap.get(asToken('a'))).toBeGreaterThan(0);
+  });
+
+  it('tfidfCorpus gère un corpus et vocabulaire vides', () => {
+    const tfidf = tfidfCorpus([], []);
+    expect(tfidf).toEqual([]);
+  });
+
+  it('tfidfCorpus gère des tokens absents du vocabulaire', () => {
+    const tf = [new Map([[asToken('x'), asFrequency(1)]])];
+    const vocab = [asToken('a')];
+    const tfidf = tfidfCorpus(tf, vocab);
+    expect(tfidf[0].get(asToken('a'))).toBeUndefined();
+  });
+
+  it('softmaxTfidf gère un tableau vide', () => {
+    const result = softmaxTfidf([]);
+    expect(result).toEqual([]);
+  });
+
+  it('softmaxTfidf gère des valeurs nulles', () => {
+    const doc = new Map([
+      [asToken('a'), 0],
+      [asToken('b'), 0],
+    ]);
+    const result = softmaxTfidf([doc])[0];
+    expect(Array.from(result.values()).reduce((acc, v) => acc + v, 0)).toBeCloseTo(1);
+  });
+
+  it('sparseToDense gère un document avec des tokens absents du vocabulaire', () => {
+    const vocab = [asToken('a'), asToken('b')];
+    const docs = [new Map([[asToken('c'), 5]])];
+    const dense = sparseToDense(docs, vocab);
+    expect(dense).toEqual([[0, 0]]);
+  });
+
+  it('sparseToDense gère un tableau de documents vide', () => {
+    const vocab = [asToken('a'), asToken('b')];
+    const dense = sparseToDense([], vocab);
+    expect(dense).toEqual([]);
+  });
   it('tokensCorpus génère les bons ngrams', () => {
     const corpus = ['abc', 'bcd'];
     const toks = tokensCorpus(corpus, { minN: 2, maxN: 2 });
