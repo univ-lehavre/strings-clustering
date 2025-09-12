@@ -155,7 +155,8 @@ export const ngrams = (
   return out;
 };
 
-export const allNgrams = (s: string, opts: AllNgramsOptions): Token[] => {
+export const allNgrams = (s: string, opts?: AllNgramsOptions): Token[] => {
+  opts = opts || {};
   opts.minN = opts.minN ?? 1;
   opts.maxN = opts.maxN ?? Math.min(10, s.length);
   if (s.length < 1 || opts.minN > opts.maxN) return [];
