@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@univ-lehavre/ts-matrix':
-        specifier: 1.0.0-zeta
-        version: 1.0.0-zeta
+        specifier: 1.0.0-theta
+        version: 1.0.0-theta
       effect:
         specifier: ^3.17.13
         version: 3.17.13
@@ -1156,8 +1156,8 @@ packages:
     resolution: {integrity: sha512-T+S1KqRD4sg/bHfLwrpF/K3gQLBM1n7Rp7OjjikjTEssI2YJzQpi5WXoynOaQ93ERIuq3O8RBTOUYDKszUCEHw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@univ-lehavre/ts-matrix@1.0.0-zeta':
-    resolution: {integrity: sha512-t9ghyRXkkRMm7zpGJQx+XKFB/McHOV0FbKp9pnBR5zz2wOGcHQ72qVXCG/InI4dUCHTpyG9ETbagN55FSS2XTg==}
+  '@univ-lehavre/ts-matrix@1.0.0-theta':
+    resolution: {integrity: sha512-D1cUB/kTxo+jDEOcnvRAfG9eCBgMecLBUPifzXHPYMc4JBJ+RByBLDBLUbkjU8ElmqrTnnoLVddUK2iAd/EBbA==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -4365,7 +4365,7 @@ snapshots:
       '@typescript-eslint/types': 8.43.0
       eslint-visitor-keys: 4.2.1
 
-  '@univ-lehavre/ts-matrix@1.0.0-zeta': {}
+  '@univ-lehavre/ts-matrix@1.0.0-theta': {}
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:

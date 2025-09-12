@@ -140,3 +140,53 @@ export const reduceDimensionality = (
 
   return { docTopicMatrix: W, topicTokenMatrix: H };
 };
+
+export const dominantTopicIndexForOneDocument = (
+  docTopicMatrix: DenseMatrix,
+  docIndex: number,
+): number => {
+  if (docIndex < 0 || docIndex >= docTopicMatrix.nRows)
+    throw new Error('Index de document hors limites');
+  const data = docTopicMatrix.getRow(docIndex);
+  const max = Math.max(...data);
+  const maxIndices = data.map((v, i) => (v === max ? i : -1)).filter(i => i !== -1);
+  return maxIndices[(Math.random() * maxIndices.length) | 0];
+};
+
+export const documentsForOneDominantTopic = (
+  docTopicMatrix: DenseMatrix,
+  topicIndex: number,
+  corpus: string[],
+): string[] => {
+  if (topicIndex < 0 || topicIndex >= docTopicMatrix.nCols)
+    throw new Error('Index de topic hors limites');
+  const docs: string[] = [];
+  for (let i = 0; i < docTopicMatrix.nRows; i++) {
+    if (topicIndex === dominantTopicIndexForOneDocument(docTopicMatrix, i)) {
+      docs.push(corpus[i]);
+    }
+  }
+  return docs;
+};
+
+export const dominantDocumentIndexForOneTopic = (
+  docTopicMatrix: DenseMatrix,
+  topicIndex: number,
+): number => {
+  if (topicIndex < 0 || topicIndex >= docTopicMatrix.nCols)
+    throw new Error('Index de topic hors limites');
+  const data = docTopicMatrix.getCol(topicIndex);
+  const max = Math.max(...data);
+  const maxIndices = data.map((v, i) => (v === max ? i : -1)).filter(i => i !== -1);
+  return maxIndices[(Math.random() * maxIndices.length) | 0];
+};
+
+export const groupMultiSelect = (docTopicMatrix: DenseMatrix, corpus: string[]) => {
+  const result: Record<string, string[]> = {};
+  for (let j = 0; j < docTopicMatrix.nCols; j++) {
+    const topicDocs = documentsForOneDominantTopic(docTopicMatrix, j, corpus);
+    const topicTitle = corpus[dominantDocumentIndexForOneTopic(docTopicMatrix, j)];
+    result[`${topicTitle}`] = topicDocs;
+  }
+  return result;
+};

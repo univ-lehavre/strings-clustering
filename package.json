@@ -87,7 +87,7 @@
     "typescript-eslint": "^8.43.0"
   },
   "dependencies": {
-    "@univ-lehavre/ts-matrix": "1.0.0-zeta",
+    "@univ-lehavre/ts-matrix": "1.0.0-theta",
     "effect": "^3.17.13"
   }
 }

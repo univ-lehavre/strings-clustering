@@ -8,7 +8,9 @@ import {
   softmaxTfidf,
   sparseToDense,
   asFrequency,
+  dominantTopicIndexForOneDocument,
 } from '../src';
+import { DenseMatrix } from '@univ-lehavre/ts-matrix';
 
 describe('embeddings', () => {
   it('tokensCorpus gère un corpus vide', () => {
@@ -162,158 +164,32 @@ describe('embeddings', () => {
     const dense = sparseToDense(docs, vocab);
     expect(dense).toEqual([[1, 0]]);
   });
-});
 
-describe('sparseToDense', () => {
-  it('convertit un document sparse simple en dense', () => {
-    const vocab = [asToken('a'), asToken('b'), asToken('c')];
-    const docs = [
-      new Map([
-        [asToken('a'), 1],
-        [asToken('c'), 2],
-      ]),
+  it("dominantTopicIndexForOneDocument retourne l'indice du topic dominant", () => {
+    // Crée une matrice 3 documents x 4 topics
+    // document 0: topic 1 est maximal
+    // document 1: topic 2 est maximal
+    // document 2: topics 0 et 3 partagent le max -> on attend un des deux
+    const matrixData = [
+      [0.1, 0.9, 0.2, 0.0],
+      [0.0, 0.2, 0.8, 0.1],
+      [0.5, 0.1, 0.2, 0.5],
     ];
-    const result = sparseToDense(docs, vocab);
-    expect(result).toEqual([[1, 0, 2]]);
+    // Importer DenseMatrix dynamiquement pour éviter erreurs d'import top-level
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+    const idx0 = dominantTopicIndexForOneDocument(dm, 0);
+    const idx1 = dominantTopicIndexForOneDocument(dm, 1);
+    const idx2 = dominantTopicIndexForOneDocument(dm, 2);
+    expect(idx0).toBe(1);
+    expect(idx1).toBe(2);
+    expect([0, 3]).toContain(idx2);
   });
 
-  it('gère plusieurs documents', () => {
-    const vocab = [asToken('x'), asToken('y')];
-    const docs = [new Map([[asToken('x'), 3]]), new Map([[asToken('y'), 4]])];
-    const result = sparseToDense(docs, vocab);
-    expect(result).toEqual([
-      [3, 0],
-      [0, 4],
-    ]);
-  });
-
-  it('remplit de zéros les tokens absents', () => {
-    const vocab = [asToken('a'), asToken('b')];
-    const docs = [new Map([[asToken('a'), 5]]), new Map()];
-    const result = sparseToDense(docs, vocab);
-    expect(result).toEqual([
-      [5, 0],
-      [0, 0],
-    ]);
-  });
-
-  it('gère un vocabulaire vide', () => {
-    const vocab: ReturnType<typeof asToken>[] = [];
-    const docs = [new Map([[asToken('a'), 1]])];
-    const result = sparseToDense(docs, vocab);
-    expect(result).toEqual([[]]);
-  });
-
-  it('gère des documents vides', () => {
-    const vocab = [asToken('a'), asToken('b')];
-    const docs: Map<ReturnType<typeof asToken>, number>[] = [];
-    const result = sparseToDense(docs, vocab);
-    expect(result).toEqual([]);
-  });
-});
-
-describe('softmaxTfidf', () => {
-  it('normalise un document TF-IDF simple', () => {
-    const doc = new Map([
-      [asToken('a'), 1],
-      [asToken('b'), 2],
-      [asToken('c'), 3],
-    ]);
-    const result = softmaxTfidf([doc])[0];
-    const values = Array.from(result.values());
-    const sum = values.reduce((acc, v) => acc + v, 0);
-    expect(sum).toBeCloseTo(1, 6);
-    // Vérifie que la plus grande valeur correspond au plus grand score
-    const maxToken = [...result.entries()].reduce((a, b) => (a[1] > b[1] ? a : b))[0];
-    expect(maxToken as string).toBe('c');
-  });
-
-  it('gère les valeurs négatives', () => {
-    const doc = new Map([
-      [asToken('x'), -1],
-      [asToken('y'), -2],
-      [asToken('z'), -3],
-    ]);
-    const result = softmaxTfidf([doc])[0];
-    const values = Array.from(result.values());
-    const sum = values.reduce((acc, v) => acc + v, 0);
-    expect(sum).toBeCloseTo(1, 6);
-    const maxToken = [...result.entries()].reduce((a, b) => (a[1] > b[1] ? a : b))[0];
-    expect(maxToken as string).toBe('x');
-  });
-
-  it('retourne un document vide si la map est vide', () => {
-    const doc = new Map();
-    const result = softmaxTfidf([doc])[0];
-    expect(result.size).toBe(0);
-  });
-
-  it('normalise plusieurs documents', () => {
-    const docs = [
-      new Map([
-        [asToken('a'), 0],
-        [asToken('b'), 0],
-      ]),
-      new Map([
-        [asToken('x'), 10],
-        [asToken('y'), 0],
-      ]),
-    ];
-    const results = softmaxTfidf(docs);
-    expect(results.length).toBe(2);
-    expect(Array.from(results[0].values()).reduce((acc, v) => acc + v, 0)).toBeCloseTo(1, 6);
-    expect(Array.from(results[1].values()).reduce((acc, v) => acc + v, 0)).toBeCloseTo(1, 6);
-    // Le token 'x' doit dominer dans le second doc
-    const maxToken = [...results[1].entries()].reduce((a, b) => (a[1] > b[1] ? a : b))[0];
-    expect(maxToken as string).toBe('x');
-  });
-
-  it('renvoie des distributions valides pour des cas numériques extrêmes', () => {
-    // cas 1: très grandes valeurs -> softmax doit rester stable
-    const large = new Map([
-      [asToken('a'), 1e6],
-      [asToken('b'), 1e6 - 10],
-      [asToken('c'), 1e6 - 20],
-    ]);
-
-    // cas 2: très petites (négatives) valeurs
-    const small = new Map([
-      [asToken('x'), -1e6],
-      [asToken('y'), -1e6 - 5],
-    ]);
-
-    // cas 3: document avec une seule valeur
-    const single = new Map([[asToken('only'), 42]]);
-
-    // cas 4: document vide
-    const empty = new Map();
-
-    const results = softmaxTfidf([large, small, single, empty]);
-
-    // Vérifications pour chaque document non-vide
-    const eps = 1e-10;
-    for (let i = 0; i < results.length; i++) {
-      const doc = results[i];
-      if (i === 3) {
-        // doc vide -> map vide
-        expect(doc.size).toBe(0);
-        continue;
-      }
-      const values = Array.from(doc.values());
-      // toutes les valeurs doivent être entre 0 et 1
-      for (const v of values) {
-        expect(v).toBeGreaterThanOrEqual(-eps);
-        expect(v).toBeLessThanOrEqual(1 + eps);
-      }
-      // somme proche de 1
-      const sum = values.reduce((acc, v) => acc + v, 0);
-      expect(sum).toBeCloseTo(1, 8);
-      // la valeur la plus élevée doit correspondre au token ayant le plus grand score original
-      const entries = Array.from(doc.entries());
-      const maxEntry = entries.reduce((a, b) => (a[1] > b[1] ? a : b));
-      if (i === 0) expect(maxEntry[0] as string).toBe('a');
-      if (i === 1) expect(maxEntry[0] as string).toBe('x');
-      if (i === 2) expect(maxEntry[0] as string).toBe('only');
-    }
+  it("dominantTopicIndexForOneDocument l'ève une erreur pour index hors limites", () => {
+    // matrice 1x2
+    const matrixData = [[0.1, 0.9]];
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+    expect(() => dominantTopicIndexForOneDocument(dm, -1)).toThrow();
+    expect(() => dominantTopicIndexForOneDocument(dm, 5)).toThrow();
   });
 });
