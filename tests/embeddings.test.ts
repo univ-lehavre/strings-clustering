@@ -9,6 +9,7 @@ import {
   sparseToDense,
   asFrequency,
   dominantTopicIndexForOneDocument,
+  documentsForOneDominantTopic,
 } from '../src';
 import { DenseMatrix } from '@univ-lehavre/ts-matrix';
 
@@ -191,5 +192,37 @@ describe('embeddings', () => {
     const dm = new DenseMatrix(matrixData, { nonNegative: true });
     expect(() => dominantTopicIndexForOneDocument(dm, -1)).toThrow();
     expect(() => dominantTopicIndexForOneDocument(dm, 5)).toThrow();
+  });
+
+  it('documentsForOneDominantTopic retourne les documents du topic demandé', () => {
+    // Crée une matrice 4 documents x 3 topics
+    // doc0 -> topic0 dominant
+    // doc1 -> topic1 dominant
+    // doc2 -> topic0 dominant
+    // doc3 -> topic2 dominant
+    const matrixData = [
+      [0.9, 0.1, 0.0],
+      [0.0, 0.8, 0.2],
+      [0.7, 0.2, 0.1],
+      [0.1, 0.0, 0.9],
+    ];
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+    const corpus = ['doc0', 'doc1', 'doc2', 'doc3'];
+
+    const docsTopic0 = documentsForOneDominantTopic(dm, 0, corpus);
+    const docsTopic1 = documentsForOneDominantTopic(dm, 1, corpus);
+    const docsTopic2 = documentsForOneDominantTopic(dm, 2, corpus);
+
+    expect(docsTopic0.sort()).toEqual(['doc0', 'doc2'].sort());
+    expect(docsTopic1).toEqual(['doc1']);
+    expect(docsTopic2).toEqual(['doc3']);
+  });
+
+  it('documentsForOneDominantTopic lève une erreur pour index de topic hors limites', () => {
+    const matrixData = [[0.5, 0.5]]; // 1x2
+    const dm = new DenseMatrix(matrixData, { nonNegative: true });
+    const corpus = ['only'];
+    expect(() => documentsForOneDominantTopic(dm, -1, corpus)).toThrow();
+    expect(() => documentsForOneDominantTopic(dm, 5, corpus)).toThrow();
   });
 });
