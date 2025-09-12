@@ -3,23 +3,24 @@ import { levenshtein, ngrams, normalizeString, allNgrams } from '../src/utils';
 describe('normalizeString', () => {
   it('supprime les diacritiques et met en minuscules', () => {
     expect(normalizeString('École')).toBe('ecole');
+    expect(normalizeString('École', { toLowerCase: true, removeDiacritics: true })).toBe('ecole');
   });
 
   it('remplace la ponctuation par des espaces et collapse les espaces', () => {
     expect(
-      normalizeString('Normandie Univ, UNILEHAVRE, FR 3038 CNRS, URCOM, 76600 Le Havre, France'),
-    ).toBe('normandie univ unilehavre fr 3038 cnrs urcom 76600 le havre france');
+      normalizeString('Normandie Univ, UNILEHAVRE, FR 3038 CNRS, URCOM, 76600 Le Havre, France', {
+        removePunctuation: true,
+        collapseWhitespace: true,
+      }),
+    ).toBe('Normandie Univ UNILEHAVRE FR 3038 CNRS URCOM 76600 Le Havre France');
   });
 
   it('gère les caractères spéciaux et retours à la ligne', () => {
     expect(normalizeString('URCOM - Unité de Recherche en Chimie\nOrganique')).toBe(
       'urcom unite de recherche en chimie organique',
     );
-    // collapse whitespace and trim
     expect(normalizeString('  A   B  ')).toBe('a b');
-    // keep numbers and letters
     expect(normalizeString('Room #42, Bldg. 7')).toBe('room 42 bldg 7');
-    // remove diacritics on long strings
     expect(normalizeString('Université Le Havre Normandie, Équipe de Recherche')).toBe(
       'universite le havre normandie equipe de recherche',
     );
@@ -69,6 +70,7 @@ describe('levenshtein', () => {
 describe('ngrams', () => {
   it('génère des n-grams simples', () => {
     expect(ngrams('abcde', 3)).toEqual(['abc', 'bcd', 'cde']);
+    expect(ngrams('abcde', 3, { normalize: false })).toEqual(['abc', 'bcd', 'cde']);
   });
 
   it('pad ajoute des bordures', () => {
@@ -83,6 +85,7 @@ describe('ngrams', () => {
 
   it('enlève les espaces par défaut et normalise', () => {
     expect(ngrams('Écôle  1', 2)).toEqual(['ec', 'co', 'ol', 'le', 'e1']);
+    expect(ngrams('Écôle  1', 2, { normalize: true })).toEqual(['ec', 'co', 'ol', 'le', 'e1']);
   });
 
   it('preserveWhitespace true conserve les espaces', () => {
