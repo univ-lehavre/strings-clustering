@@ -60,7 +60,7 @@ const dense = sparseToDense(softmax, vocab);
 console.log(`Vocabulaire taille : ${vocab.length}`);
 console.log(`Matrice dense (${dense.length} x ${dense[0].length}) :`);
 // Réduction de dimensionnalité avec 4 topics
-const { docTopicMatrix, topicTermMatrix } = reduceDimensionality(corpus, nbrTopics, opts);
+const { docTopicMatrix, topicTokenMatrix } = reduceDimensionality(corpus, nbrTopics, opts);
 
 // Connaissant docTopicMatrix et vocab, affiche les topics par document
 for (let i = 0; i < docTopicMatrix.getData().length; i += nbrTopics) {
@@ -72,12 +72,12 @@ for (let i = 0; i < docTopicMatrix.getData().length; i += nbrTopics) {
   );
 }
 
-// Connaissant topicTermMatrix et vocab, affiche les 4 meilleurs termes par topic
+// Connaissant topicTokenMatrix et vocab, affiche les 4 meilleurs termes par topic
 let topic = 0;
-for (let i = 0; i < topicTermMatrix.getData().length; i += vocab.length) {
+for (let i = 0; i < topicTokenMatrix.getData().length; i += vocab.length) {
   topic++;
-  const topicTerms = topicTermMatrix.getData().slice(i, i + vocab.length);
-  const topTerms = Array.from(topicTerms.entries())
+  const topicTokens = topicTokenMatrix.getData().slice(i, i + vocab.length);
+  const topTerms = Array.from(topicTokens.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
   console.log(

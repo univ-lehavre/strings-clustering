@@ -267,4 +267,53 @@ describe('softmaxTfidf', () => {
     const maxToken = [...results[1].entries()].reduce((a, b) => (a[1] > b[1] ? a : b))[0];
     expect(maxToken as string).toBe('x');
   });
+
+  it('renvoie des distributions valides pour des cas numériques extrêmes', () => {
+    // cas 1: très grandes valeurs -> softmax doit rester stable
+    const large = new Map([
+      [asToken('a'), 1e6],
+      [asToken('b'), 1e6 - 10],
+      [asToken('c'), 1e6 - 20],
+    ]);
+
+    // cas 2: très petites (négatives) valeurs
+    const small = new Map([
+      [asToken('x'), -1e6],
+      [asToken('y'), -1e6 - 5],
+    ]);
+
+    // cas 3: document avec une seule valeur
+    const single = new Map([[asToken('only'), 42]]);
+
+    // cas 4: document vide
+    const empty = new Map();
+
+    const results = softmaxTfidf([large, small, single, empty]);
+
+    // Vérifications pour chaque document non-vide
+    const eps = 1e-10;
+    for (let i = 0; i < results.length; i++) {
+      const doc = results[i];
+      if (i === 3) {
+        // doc vide -> map vide
+        expect(doc.size).toBe(0);
+        continue;
+      }
+      const values = Array.from(doc.values());
+      // toutes les valeurs doivent être entre 0 et 1
+      for (const v of values) {
+        expect(v).toBeGreaterThanOrEqual(-eps);
+        expect(v).toBeLessThanOrEqual(1 + eps);
+      }
+      // somme proche de 1
+      const sum = values.reduce((acc, v) => acc + v, 0);
+      expect(sum).toBeCloseTo(1, 8);
+      // la valeur la plus élevée doit correspondre au token ayant le plus grand score original
+      const entries = Array.from(doc.entries());
+      const maxEntry = entries.reduce((a, b) => (a[1] > b[1] ? a : b));
+      if (i === 0) expect(maxEntry[0] as string).toBe('a');
+      if (i === 1) expect(maxEntry[0] as string).toBe('x');
+      if (i === 2) expect(maxEntry[0] as string).toBe('only');
+    }
+  });
 });

@@ -1,6 +1,6 @@
 import { Brand } from 'effect';
 import { allNgrams } from './utils';
-import type { AllNgramsOptions, Token } from './types';
+import { type AllNgramsOptions, type Token } from './types';
 import { DenseMatrix, nnmf } from '@univ-lehavre/ts-matrix';
 
 export const tokensCorpus = (corpus: string[], opts?: AllNgramsOptions): Token[][] => {
@@ -124,9 +124,9 @@ export const reduceDimensionality = (
   corpus: string[],
   nTopics: number,
   opts?: AllNgramsOptions,
-): { docTopicMatrix: DenseMatrix; topicTermMatrix: DenseMatrix } => {
+): { docTopicMatrix: DenseMatrix; topicTokenMatrix: DenseMatrix } => {
   if (tfidfCorpus.length === 0 || vocabulary.length === 0) {
-    return { docTopicMatrix: new DenseMatrix([]), topicTermMatrix: new DenseMatrix([]) };
+    return { docTopicMatrix: new DenseMatrix([]), topicTokenMatrix: new DenseMatrix([]) };
   }
   const tokens = tokensCorpus(corpus, opts);
   const tf = tfCorpus(tokens);
@@ -137,5 +137,6 @@ export const reduceDimensionality = (
   const matrix = new DenseMatrix(denseMatrix, { nonNegative: true });
   // Application de la factorisation NNMF
   const [W, H] = nnmf(matrix, nTopics);
-  return { docTopicMatrix: W, topicTermMatrix: H };
+
+  return { docTopicMatrix: W, topicTokenMatrix: H };
 };
