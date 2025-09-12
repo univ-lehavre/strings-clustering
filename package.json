@@ -1,6 +1,6 @@
 {
   "name": "@univ-lehavre/strings-clustering",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-beta",
   "description": "Regroupement de chaînes de caractères par similarité",
   "author": "Pierre-Olivier Chasset",
   "license": "UNLICENSED",
@@ -66,7 +66,7 @@
     "demo": "pnpm -s tsx demo/index.ts",
     "publish:only": "npm publish --access public",
     "publish:check": "npm pack --dry-run",
-    "publish": "run-s publish:only"
+    "publish": "run-s build publish:only"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.3",
